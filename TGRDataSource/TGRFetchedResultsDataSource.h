@@ -47,4 +47,9 @@
                    cellReuseIdentifier:(NSString *)reuseIdentifier
                     configureCellBlock:(TGRDataSourceCellBlock)configureCellBlock;
 
+- (id)initWithFetchedResultsController:(NSFetchedResultsController *)controller
+              cellReuseIdentifierBlock:(TGRDataSourceCellReuseIdentifierBlock)configureCellReuseIdentifierBlock
+                    configureCellBlock:(TGRDataSourceCellBlock)configureCellBlock;
+
+
 @end

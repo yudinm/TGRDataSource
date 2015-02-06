@@ -27,6 +27,7 @@
 
 @property (copy, nonatomic) NSString *cellReuseIdentifier;
 @property (copy, nonatomic) TGRDataSourceCellBlock configureCellBlock;
+@property (copy, nonatomic) TGRDataSourceCellReuseIdentifierBlock reuseIdentifierCellBlock;
 
 @end
 
@@ -43,6 +44,21 @@
     }
     
     return self;
+}
+
+- (id)initWithCellReuseIdentifiersBlock:(TGRDataSourceCellReuseIdentifierBlock)reuseIdentifierBlock
+                     configureCellBlock:(TGRDataSourceCellBlock)configureCellBlock
+{
+    {
+        self = [super init];
+
+        if (self) {
+            self.reuseIdentifierCellBlock = reuseIdentifierBlock;
+            self.configureCellBlock = configureCellBlock;
+        }
+
+        return self;
+    }
 }
 
 - (id)itemAtIndexPath:(NSIndexPath *)indexPath {
@@ -63,14 +79,33 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:self.cellReuseIdentifier
-                                                            forIndexPath:indexPath];
-    id item = [self itemAtIndexPath:indexPath];
-    
-    if (self.configureCellBlock) {
-        self.configureCellBlock(cell, item);
+    UITableViewCell *cell;
+    NSDictionary *info = @{@"indexPath":indexPath};
+    if (!self.reuseIdentifierCellBlock) {
+        cell = [tableView dequeueReusableCellWithIdentifier:self.cellReuseIdentifier
+                                               forIndexPath:indexPath];
+        id item = [self itemAtIndexPath:indexPath];
+
+
+        if (self.configureCellBlock) {
+            self.configureCellBlock(cell, item, info);
+        }
+    }else{
+        id item = [self itemAtIndexPath:indexPath];
+
+        NSString *reuseIdentifier;
+        if (self.reuseIdentifierCellBlock) {
+            reuseIdentifier = self.reuseIdentifierCellBlock(cell, item, info);
+        }
+
+        cell = [tableView dequeueReusableCellWithIdentifier:reuseIdentifier
+                                               forIndexPath:indexPath];
+
+        if (self.configureCellBlock) {
+            self.configureCellBlock(cell, item, info);
+        }
     }
-    
+
     return cell;
 }
 
@@ -86,15 +121,20 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView
                   cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:self.cellReuseIdentifier
-                                                                           forIndexPath:indexPath];
+    NSDictionary *info = @{@"indexPath":indexPath};
     id item = [self itemAtIndexPath:indexPath];
-    
+    NSString *reuseIdentifier;
+    if (self.reuseIdentifierCellBlock) {
+        reuseIdentifier = self.reuseIdentifierCellBlock(nil, item, info);
+    }
+    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:reuseIdentifier
+                                                                           forIndexPath:indexPath];
     if (self.configureCellBlock) {
-        self.configureCellBlock(cell, item);
+        self.configureCellBlock(cell, item, info);
     }
     
     return cell;
 }
+
 
 @end
